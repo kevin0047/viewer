@@ -7,14 +7,26 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Image x:Name="MainImage" Grid.Row="0" Stretch="Uniform"/>
+        <!-- 이미지 디스플레이 영역 -->
+        <Grid Grid.Row="0">
+            <Viewbox Grid.Row="0"  Name="ImageScrollViewer">
+                <Image x:Name="MainImage" Stretch="None" MouseWheel="MainImage_MouseWheel" 
+           MouseLeftButtonDown="MainImage_MouseLeftButtonDown" 
+           MouseMove="MainImage_MouseMove" 
+           MouseLeftButtonUp="MainImage_MouseLeftButtonUp"/>
+            </Viewbox>
+            <!-- 이미지 정보를 표시할 TextBlock 추가 -->
+            <TextBlock x:Name="ImageInfoTextBlock" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,10,10,0" 
+                       Background="#80000000" Foreground="White" Padding="5"/>
+        </Grid>
+        <!-- 하단 컨트롤 영역 -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-
+            <!-- 왼쪽 컨트롤 패널 -->
             <StackPanel Grid.Column="0" Orientation="Horizontal">
                 <Button Content="이전" Click="PrevButton_Click" Margin="5"/>
                 <Button Content="다음" Click="NextButton_Click" Margin="5"/>
@@ -22,7 +34,7 @@
                 <Button Content="카테고리 추가" Click="AddCategoryButton_Click" Margin="5"/>
                 <Button Content="실행 취소" Click="UndoButton_Click" Margin="5"/>
             </StackPanel>
-
+            <!-- 중앙 재생 순서 선택 -->
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="재생 순서:" VerticalAlignment="Center" Margin="5"/>
                 <ComboBox x:Name="PlayOrderComboBox" SelectedIndex="0" SelectionChanged="PlayOrderComboBox_SelectionChanged" Width="100" Margin="5">
@@ -30,7 +42,7 @@
                     <ComboBoxItem Content="랜덤 재생"/>
                 </ComboBox>
             </StackPanel>
-
+            <!-- 오른쪽 카테고리 버튼 패널 -->
             <ScrollViewer Grid.Column="2" HorizontalScrollBarVisibility="Auto">
                 <WrapPanel x:Name="CategoryPanel"/>
             </ScrollViewer>

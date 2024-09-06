@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using Microsoft.WindowsAPICodePack.Dialogs;
+using System.Windows.Media;
+
 namespace PhotoViewer
 {
     public partial class MainWindow : Window
@@ -19,9 +22,13 @@ namespace PhotoViewer
         private Random random = new Random();
         private bool isRandomPlay = false;
 
+        private double zoomLevel = 1.0;
+        private Point? lastMousePosition;
+
         public MainWindow()
         {
             InitializeComponent();
+            
         }
 
         private void OpenButton_Click(object sender, RoutedEventArgs e)
@@ -125,6 +132,61 @@ namespace PhotoViewer
             }
         }
 
+        private void MainImage_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            e.Handled = true;
+            Point mousePos = e.GetPosition(MainImage);
+
+            double oldZoomLevel = zoomLevel;
+            if (e.Delta > 0)
+                zoomLevel *= 1.1;
+            else
+                zoomLevel /= 1.1;
+
+            zoomLevel = Math.Max(0.1, Math.Min(10, zoomLevel));
+
+            ApplyZoom(mousePos, oldZoomLevel);
+        }
+
+        private void ApplyZoom(Point mousePos, double oldZoomLevel)
+        {
+            if (MainImage.Source != null)
+            {
+                double originalWidth = MainImage.Source.Width;
+                double originalHeight = MainImage.Source.Height;
+
+                MainImage.Width = originalWidth * zoomLevel;
+                MainImage.Height = originalHeight * zoomLevel;
+
+               
+            }
+        }
+
+        private void MainImage_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            lastMousePosition = e.GetPosition(ImageScrollViewer);
+            MainImage.CaptureMouse();
+        }
+
+        private void MainImage_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (lastMousePosition.HasValue && e.LeftButton == MouseButtonState.Pressed)
+            {
+                Point currentPosition = e.GetPosition(ImageScrollViewer);
+                Vector delta = Point.Subtract(lastMousePosition.Value, currentPosition);
+
+
+
+                lastMousePosition = currentPosition;
+            }
+        }
+
+        private void MainImage_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            lastMousePosition = null;
+            MainImage.ReleaseMouseCapture();
+        }
+
         private void DisplayImage()
         {
             if (imagePaths != null && imagePaths.Length > 0 && currentImageIndex >= 0 && currentImageIndex < imageOrder.Count)
@@ -138,9 +200,17 @@ namespace PhotoViewer
                     bitmap.EndInit();
                     MainImage.Source = bitmap;
 
+                    // 줌 레벨 리셋 및 중앙 정렬
+                    zoomLevel = 1.0;
+                    MainImage.Width = bitmap.PixelWidth;
+                    MainImage.Height = bitmap.PixelHeight;
+
+
                     this.Title = $"Photo Viewer - {Path.GetFileName(imagePaths[imageOrder[currentImageIndex]])} ({currentImageIndex + 1}/{imagePaths.Length})";
 
-                   
+                    // 이미지 정보 업데이트
+                    FileInfo fileInfo = new FileInfo(imagePaths[imageOrder[currentImageIndex]]);
+                    ImageInfoTextBlock.Text = $"파일명: {fileInfo.Name}, 크기: {fileInfo.Length / 1024} KB, 해상도: {bitmap.PixelWidth}x{bitmap.PixelHeight}";
                 }
                 catch (Exception ex)
                 {
@@ -151,11 +221,9 @@ namespace PhotoViewer
             {
                 MainImage.Source = null;
                 this.Title = "Photo Viewer";
-                
+                ImageInfoTextBlock.Text = string.Empty;
             }
         }
-
-
 
         private void AddCategoryButton_Click(object sender, RoutedEventArgs e)
         {
